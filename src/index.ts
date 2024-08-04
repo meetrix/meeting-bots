@@ -1,6 +1,7 @@
+// src/index.ts
 import express from 'express';
-import { joinGoogleMeet } from './joinGoogleMeet';
-import { JoinGoogleMeetParams } from './types';
+import { GoogleMeetBot } from './GoogleMeetBot';
+import { JoinParams, SendChatMessageParams } from './AbstractMeetBot';
 
 const app = express();
 const port = 3000;
@@ -8,13 +9,15 @@ const port = 3000;
 app.use(express.json());
 
 app.post('/join-meet', async (req, res) => {
-  const { googleMeetUrl, fullName, message } = req.body as JoinGoogleMeetParams;
-  if (!googleMeetUrl || !fullName || !message) {
+  const { url, fullName, message, pin } = req.body as JoinParams & SendChatMessageParams;
+  if (!url || !fullName || !message) {
     return res.status(400).send('Missing required parameters');
   }
 
   try {
-    await joinGoogleMeet({ googleMeetUrl, fullName, message });
+    const bot = new GoogleMeetBot();
+    await bot.join({ url: url, fullName });
+    await bot.sendChatMessage({ message, pin });
     res.status(200).send('Joined Google Meet and sent message successfully');
   } catch (error) {
     console.error('Error joining Google Meet:', error);

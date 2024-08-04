@@ -8,7 +8,7 @@ stealthPlugin.enabledEvasions.delete('iframe.contentWindow');
 stealthPlugin.enabledEvasions.delete('media.codecs');
 chromium.use(stealthPlugin);
 
-export async function joinGoogleMeet({ googleMeetUrl, fullName, message }: JoinGoogleMeetParams) {
+export async function joinGoogleMeet({ url, fullName, message }: JoinGoogleMeetParams) {
   const videoPath = path.resolve(__dirname, '../assets/videos/standup.y4m');
 
   console.log('Launching browser...');
@@ -29,7 +29,7 @@ export async function joinGoogleMeet({ googleMeetUrl, fullName, message }: JoinG
   const page = await context.newPage();
 
   console.log('Navigating to Google Meet URL...');
-  await page.goto(googleMeetUrl, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'networkidle' });
 
   console.log('Waiting for the input field to be visible...');
   await page.waitForSelector('input[type="text"][aria-label="Your name"]');

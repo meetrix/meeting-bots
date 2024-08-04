@@ -1,5 +1,5 @@
 export interface JoinGoogleMeetParams {
-  googleMeetUrl: string;
+  url: string;
   fullName: string;
   message: string;
 }
