@@ -17,7 +17,7 @@ Built with playwright-extra
    curl -X POST http://localhost:3000/join-meet \
    -H "Content-Type: application/json" \
    -d '{
-   "url": "https://meet.google.com/xxx-xxx-xxx",
+   "url": "https://meet.google.com/ynw-zmcg-qfq",
    "fullName": "Buddhika",
    "message": "this is a test message"
    }'
