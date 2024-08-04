@@ -1,5 +1,12 @@
 # Google Meet Bot
 
+A bot that can join google meet with following capabilities
+
+1. Showing a dummy video
+2. Sending a message
+
+Built with playwright-extra
+
 ## Usage
 
 1. `npm i`
