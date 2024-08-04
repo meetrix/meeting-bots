@@ -28,3 +28,7 @@
 ### Generating a video from an image
 
 1. `ffmpeg -loop 1 -i standup.png -pix_fmt yuv420p -t 0.05 standup.y4m`
+
+## LICENSE
+
+MIT
