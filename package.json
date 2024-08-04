@@ -1,0 +1,31 @@
+{
+  "name": "google-meet-bot",
+  "version": "1.0.0",
+  "description": "Meetrix.IO",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "build": "tsc",
+    "test": "playwright test --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "devDependencies": {
+    "@playwright/test": "^1.45.3",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.1.0",
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "playwright": "^1.45.3",
+    "playwright-extra": "^4.3.6",
+    "playwright-extra-plugin-stealth": "^0.0.1",
+    "puppeteer": "^22.15.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "ts-node": "^10.9.2"
+  }
+}

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  google-meet-bot:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    working_dir: /usr/src/app
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    # command: ["npm", "start"]
+    # xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24' npm start
+    # command: ["xvfb-run", "--auto-servernum", "--server-args='-screen 0 1280x720x24'", "npm", "start"]
+    command: ["tail", "-f", "/dev/null"]
