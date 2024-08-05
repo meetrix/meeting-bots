@@ -52,7 +52,7 @@ export class GoogleMeetBot extends AbstractMeetBot {
     await this.page.click('//button[.//span[text()="Ask to join"]]');
   }
 
-  async sendChatMessage({ message, pin }: SendChatMessageParams): Promise<void> {
+  async sendChatMessage({ message, pinMessage }: SendChatMessageParams): Promise<void> {
     console.log('Waiting for the "Chat with everyone" button...');
     await this.page.waitForSelector('button[aria-label="Chat with everyone"]', { timeout: 60000 });
 
@@ -81,7 +81,7 @@ export class GoogleMeetBot extends AbstractMeetBot {
     console.log('Waiting for the message text to appear...');
     await this.page.waitForSelector(`//div[contains(text(), "${message}")]`, { timeout: 60000 });
 
-    if (pin) {
+    if (pinMessage) {
       console.log('Hovering over the message container...');
       await this.page.hover(`//div[contains(text(), "${message}")]/ancestor::div[contains(@class, "jO4O1 chmVPb")]`);
 

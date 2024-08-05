@@ -7,7 +7,7 @@ export interface JoinParams {
 
 export interface SendChatMessageParams {
   message: string;
-  pin: boolean;
+  pinMessage?: boolean; // Optional property for pinning the message
 }
 
 export abstract class AbstractMeetBot {

@@ -17,10 +17,11 @@ Built with playwright-extra
    curl -X POST http://localhost:3000/join-meet \
    -H "Content-Type: application/json" \
    -d '{
-   "googleMeetUrl": "https://meet.google.com/ynw-zmcg-qfq",
+   "url": "https://meet.google.com/ynw-zmcg-qfq",
    "fullName": "Buddhika",
    "message": "this is a test message",
-   "fakeVideoPath": "/absolute/path/to/your/video.y4m"
+   "fakeVideoPath": "/absolute/path/to/your/video.y4m",
+   "pinMessage": true
    }'
 
    ```

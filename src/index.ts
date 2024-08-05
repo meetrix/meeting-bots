@@ -9,15 +9,15 @@ const port = 3000;
 app.use(express.json());
 
 app.post('/join-meet', async (req, res) => {
-  const { url, fullName, message, pin } = req.body as JoinParams & SendChatMessageParams;
+  const { url, fullName, message, pinMessage, fakeVideoPath } = req.body as JoinParams & SendChatMessageParams;
   if (!url || !fullName || !message) {
     return res.status(400).send('Missing required parameters');
   }
 
   try {
     const bot = new GoogleMeetBot();
-    await bot.join({ url: url, fullName });
-    await bot.sendChatMessage({ message, pin });
+    await bot.join({ url, fullName, fakeVideoPath });
+    await bot.sendChatMessage({ message, pinMessage });
     res.status(200).send('Joined Google Meet and sent message successfully');
   } catch (error) {
     console.error('Error joining Google Meet:', error);
