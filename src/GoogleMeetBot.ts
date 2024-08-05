@@ -1,7 +1,7 @@
 // src/GoogleMeetBot.ts
 import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import path from 'path';
+import fs from 'fs-extra';
 import { JoinParams, SendChatMessageParams, AbstractMeetBot } from './AbstractMeetBot';
 
 const stealthPlugin = StealthPlugin();
@@ -12,16 +12,17 @@ chromium.use(stealthPlugin);
 export class GoogleMeetBot extends AbstractMeetBot {
   private page: any;
 
-  async join({ url, fullName }: JoinParams): Promise<void> {
-    const videoPath = path.resolve(__dirname, '../assets/videos/standup.y4m');
-
+  async join({ url, fullName, fakeVideoPath }: JoinParams): Promise<void> {
     console.log('Launching browser...');
+
+    const browserArgs = ['--use-fake-device-for-media-stream'];
+    if (fakeVideoPath && await fs.pathExists(fakeVideoPath)) {
+      browserArgs.push(`--use-file-for-fake-video-capture=${fakeVideoPath}`);
+    }
+
     const browser = await chromium.launch({
       headless: false,
-      args: [
-        '--use-fake-device-for-media-stream',
-        `--use-file-for-fake-video-capture=${videoPath}`
-      ]
+      args: browserArgs,
     });
 
     const context = await browser.newContext({
