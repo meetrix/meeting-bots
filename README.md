@@ -36,7 +36,7 @@ Built with playwright-extra
 
 ### Generating a video from an image
 
-1. `ffmpeg -loop 1 -i standup.png -pix_fmt yuv420p -t 0.05 standup.y4m`
+1. `ffmpeg -loop 1 -i ./assets/images/sample.png -pix_fmt yuv420p -t 0.05 ./assets/videos/sample.y4m`
 
 ## LICENSE
 
