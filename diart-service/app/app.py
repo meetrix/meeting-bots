@@ -1,45 +1,13 @@
-from io import BytesIO
-from diart.sources import TorchStreamAudioSource
-from diart import SpeakerDiarization
-from diart.inference import StreamingInference
-import ffmpeg
 import asyncio
 import websockets
-import torchaudio
+from io import BytesIO
 
-# Example function to convert WebM data to WAV in memory and process it
+# Example function to simulate processing
 def process_webm_data(webm_data):
-    # Convert WebM to WAV in memory
-    wav_data, _ = (
-        ffmpeg
-        .input('pipe:0', format='webm')
-        .output('pipe:1', format='wav')
-        .run(input=webm_data, capture_stdout=True, capture_stderr=True)
-    )
-
-    # Use BytesIO to simulate a file in memory
-    wav_io = BytesIO(wav_data)
-
-    # Initialize the StreamReader from torchaudio
-    streamer = torchaudio.io.StreamReader(wav_io, format='wav')
-
-    # Extract sample rate from the WAV data
-    sample_rate = streamer.get_src_stream_info(0).sample_rate
-
-    # Initialize the TorchStreamAudioSource with the StreamReader
-    source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
-
-    # Initialize the Speaker Diarization pipeline
-    pipeline = SpeakerDiarization()
-
-    # Create the Streaming Inference instance
-    inference = StreamingInference(pipeline, source)
-
-    # Run the prediction
-    prediction = inference()
-
-    # For demonstration, print the prediction (if any)
-    print(prediction)
+    # For now, just print the size of the data received and return a mock result
+    print(f"Processing data of size: {len(webm_data)} bytes")
+    # Simulate processing
+    return "Processed data"
 
 # Example usage in the WebSocket server
 async def handle_websocket(websocket, path):
@@ -48,8 +16,8 @@ async def handle_websocket(websocket, path):
     try:
         async for message in websocket:
             print(f"Received a message of size {len(message)} bytes from {websocket.remote_address}")
-            process_webm_data(message)
-            await websocket.send("Message processed")
+            result = process_webm_data(message)
+            await websocket.send(result)
 
     except websockets.exceptions.ConnectionClosed as e:
         print(f"Connection closed: {e}")
