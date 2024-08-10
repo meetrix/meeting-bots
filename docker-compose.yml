@@ -15,3 +15,12 @@ services:
     # xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24' npm start
     # command: ["xvfb-run", "--auto-servernum", "--server-args='-screen 0 1280x720x24'", "npm", "start"]
     command: ["tail", "-f", "/dev/null"]
+  diart-service:
+    build:
+      context: ./diart-service
+      dockerfile: diart.Dockerfile
+    ports:
+      - "7007:7007"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HF_TOKEN=${HF_TOKEN}
