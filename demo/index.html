@@ -8,63 +8,32 @@
 <body>
     <h1>Audio Streaming to WebSocket</h1>
     <button id="startButton">Start Streaming</button>
+    <button id="stopButton" disabled>Stop Streaming</button>
     <p id="status">Status: Not Connected</p>
 
     <script>
-        async function captureAudio() {
-            try {
-                return await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (err) {
-                console.error('Error capturing audio:', err);
-                document.getElementById("status").innerText = "Status: Error capturing audio";
-            }
-        }
+        let mediaRecorder;
+        let ws;
 
-        async function sendAudioToWebSocket(ws, stream) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-            // Load the audio worklet processor
-            await audioContext.audioWorklet.addModule('pcm-processor.js');
-
-            // Create an instance of AudioWorkletNode
-            const pcmNode = new AudioWorkletNode(audioContext, 'pcm-processor');
-
-            // Handle messages received from the worklet processor
-            pcmNode.port.onmessage = (event) => {
-                const rawPCMData = event.data;
-                const encodedData = encodeAudio(rawPCMData);
-                ws.send(encodedData); // Send encoded data via WebSocket
-            };
-
-            const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-            mediaStreamSource.connect(pcmNode);
-            pcmNode.connect(audioContext.destination);
-        }
-
-        function encodeAudio(buffer) {
-            // Convert Float32Array to Uint8Array for Base64 encoding
-            const byteArray = new Uint8Array(buffer.buffer);
-
-            // Convert the Uint8Array to a binary string
-            let binaryString = '';
-            for (let i = 0; i < byteArray.length; i++) {
-                binaryString += String.fromCharCode(byteArray[i]);
-            }
-
-            // Encode the binary string to Base64
-            return btoa(binaryString);
-        }
-
-        async function startStreamingAudioToWebSocket(host, port) {
-            const ws = new WebSocket(`ws://${host}:${port}`);
+        document.getElementById("startButton").onclick = async function() {
+            ws = new WebSocket('ws://localhost:7007'); // Adjust the WebSocket URL as needed
 
             ws.onopen = async function() {
                 console.log('WebSocket connection established');
                 document.getElementById("status").innerText = "Status: Connected";
-                const stream = await captureAudio();
-                if (stream) {
-                    sendAudioToWebSocket(ws, stream);
-                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
+
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        ws.send(event.data); // Send audio data as a Blob
+                    }
+                };
+
+                mediaRecorder.start(1000); // Collect 1-second chunks
+                document.getElementById("startButton").disabled = true;
+                document.getElementById("stopButton").disabled = false;
             };
 
             ws.onmessage = function(event) {
@@ -74,11 +43,18 @@
             ws.onclose = function() {
                 console.log('WebSocket connection closed');
                 document.getElementById("status").innerText = "Status: Disconnected";
+                document.getElementById("startButton").disabled = false;
+                document.getElementById("stopButton").disabled = true;
             };
-        }
+        };
 
-        document.getElementById("startButton").onclick = function() {
-            startStreamingAudioToWebSocket('localhost', 7007); // Adjust host and port as needed
+        document.getElementById("stopButton").onclick = function() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
         };
     </script>
 </body>

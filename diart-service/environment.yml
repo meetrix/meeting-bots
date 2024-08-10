@@ -7,3 +7,5 @@ dependencies:
   - portaudio==19.6
   - libsndfile>=1.2.2
   - pip
+  - pip:
+    - .
