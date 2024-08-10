@@ -1,7 +1,7 @@
 // src/index.ts
 import express from 'express';
-import { GoogleMeetBot } from './GoogleMeetBot';
-import { JoinParams, SendChatMessageParams } from './AbstractMeetBot';
+import { GoogleMeetBot } from './util/bots/GoogleMeetBot';
+import { JoinParams, SendChatMessageParams } from './util/bots/AbstractMeetBot';
 
 const app = express();
 const port = 3000;
