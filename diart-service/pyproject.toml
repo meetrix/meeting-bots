@@ -11,6 +11,8 @@ python = "^3.8"
 diart = "^0.9.1"  # Replace with the correct version if known
 websockets = "^11.0"
 asyncio = { version = "^3.4.3", markers = "python_version < '3.10'" }  # asyncio is built-in from Python 3.10+
+ffmpeg-python = "^0.2.0"
+torchaudio = "^2.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
