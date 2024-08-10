@@ -1,25 +1,30 @@
-from diart import SpeakerDiarization
-from diart.sources import WebSocketAudioSource
-from diart.inference import StreamingInference
+import asyncio
+import websockets
 
-def main():
-    # Initialize the Speaker Diarization pipeline
-    pipeline = SpeakerDiarization()
+async def handle_websocket(websocket, path):
+    print(f"Connection established with {websocket.remote_address}")
 
-    # Setup the WebSocket Audio Source
-    source = WebSocketAudioSource(pipeline.config.sample_rate, "0.0.0.0", 7007)
+    try:
+        async for message in websocket:
+            # Log when a message is received
+            print(f"Received a message of size {len(message)} bytes from {websocket.remote_address}")
 
-    # Create the Streaming Inference instance
-    inference = StreamingInference(pipeline, source)
+            # Here you could process the message as needed
+            # For now, we'll just acknowledge the receipt
+            await websocket.send("Message received")
 
-    # Attach hooks to process the output and send to source
-    inference.attach_hooks(lambda ann_wav: source.send(ann_wav[0].to_rttm()))
+    except websockets.exceptions.ConnectionClosed as e:
+        print(f"Connection closed: {e}")
+    except Exception as e:
+        print(f"Error: {e}")
 
-    # Run the prediction
-    prediction = inference()
+    finally:
+        print(f"Connection with {websocket.remote_address} closed.")
 
-    # For demonstration, print the prediction (if any)
-    print(prediction)
+async def main():
+    server = await websockets.serve(handle_websocket, "0.0.0.0", 7007)
+    print("WebSocket server listening on ws://0.0.0.0:7007")
+    await server.wait_closed()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

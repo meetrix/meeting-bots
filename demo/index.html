@@ -23,7 +23,7 @@
                 document.getElementById("status").innerText = "Status: Connected";
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
                 mediaRecorder.ondataavailable = function(event) {
                     if (event.data.size > 0) {
