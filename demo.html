@@ -23,13 +23,33 @@
         function sendAudioToWebSocket(ws, stream) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-            const scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+            const sampleRate = audioContext.sampleRate;
+            const bufferSize = 4096; // Smaller buffer size, to be aggregated
+            const targetDuration = 0.5; // 0.5 seconds
+            const targetBufferLength = sampleRate * targetDuration;
+            let accumulatedBuffer = new Float32Array(0);
+
+            const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
 
             scriptProcessor.onaudioprocess = function(audioProcessingEvent) {
                 const inputBuffer = audioProcessingEvent.inputBuffer;
-                const inputData = inputBuffer.getChannelData(0); // get audio data
-                const encodedData = encodeAudio(inputData); // encode the audio data
-                ws.send(encodedData); // send encoded data via websocket
+                const inputData = inputBuffer.getChannelData(0); // get audio data as Float32Array
+
+                // Accumulate buffers
+                let newBuffer = new Float32Array(accumulatedBuffer.length + inputData.length);
+                newBuffer.set(accumulatedBuffer, 0);
+                newBuffer.set(inputData, accumulatedBuffer.length);
+                accumulatedBuffer = newBuffer;
+
+                // If the accumulated buffer is at least 0.5 seconds, send it
+                if (accumulatedBuffer.length >= targetBufferLength) {
+                    const dataToSend = accumulatedBuffer.subarray(0, targetBufferLength);
+                    const encodedData = encodeAudio(dataToSend);
+                    ws.send(encodedData); // send encoded data via WebSocket
+
+                    // Remove the sent data from the accumulated buffer
+                    accumulatedBuffer = accumulatedBuffer.subarray(targetBufferLength);
+                }
             };
 
             mediaStreamSource.connect(scriptProcessor);
@@ -37,11 +57,16 @@
         }
 
         function encodeAudio(buffer) {
+            // Convert Float32Array to Uint8Array for Base64 encoding
             const byteArray = new Uint8Array(buffer.buffer);
+
+            // Convert the Uint8Array to a binary string
             let binaryString = '';
             for (let i = 0; i < byteArray.length; i++) {
                 binaryString += String.fromCharCode(byteArray[i]);
             }
+
+            // Encode the binary string to Base64
             return btoa(binaryString);
         }
 
