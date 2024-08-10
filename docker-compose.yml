@@ -24,3 +24,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./diart-service:/usr/src/app
+      - cache:/root/.cache
+
+volumes:
+  cache:

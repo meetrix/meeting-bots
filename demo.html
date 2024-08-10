@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio WebSocket Stream</title>
+</head>
+<body>
+    <h1>Audio Streaming to WebSocket</h1>
+    <button id="startButton">Start Streaming</button>
+    <p id="status">Status: Not Connected</p>
+
+    <script>
+        async function captureAudio() {
+            try {
+                return await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                console.error('Error capturing audio:', err);
+                document.getElementById("status").innerText = "Status: Error capturing audio";
+            }
+        }
+
+        function sendAudioToWebSocket(ws, stream) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const mediaStreamSource = audioContext.createMediaStreamSource(stream);
+            const scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            scriptProcessor.onaudioprocess = function(audioProcessingEvent) {
+                const inputBuffer = audioProcessingEvent.inputBuffer;
+                const inputData = inputBuffer.getChannelData(0); // get audio data
+                const encodedData = encodeAudio(inputData); // encode the audio data
+                ws.send(encodedData); // send encoded data via websocket
+            };
+
+            mediaStreamSource.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+        }
+
+        function encodeAudio(buffer) {
+            const byteArray = new Uint8Array(buffer.buffer);
+            let binaryString = '';
+            for (let i = 0; i < byteArray.length; i++) {
+                binaryString += String.fromCharCode(byteArray[i]);
+            }
+            return btoa(binaryString);
+        }
+
+        async function startStreamingAudioToWebSocket(host, port) {
+            const ws = new WebSocket(`ws://${host}:${port}`);
+
+            ws.onopen = async function() {
+                console.log('WebSocket connection established');
+                document.getElementById("status").innerText = "Status: Connected";
+                const stream = await captureAudio();
+                if (stream) {
+                    sendAudioToWebSocket(ws, stream);
+                }
+            };
+
+            ws.onmessage = function(event) {
+                console.log('Received message:', event.data);
+            };
+
+            ws.onclose = function() {
+                console.log('WebSocket connection closed');
+                document.getElementById("status").innerText = "Status: Disconnected";
+            };
+        }
+
+        document.getElementById("startButton").onclick = function() {
+            startStreamingAudioToWebSocket('localhost', 7007); // Adjust host and port as needed
+        };
+    </script>
+</body>
+</html>

@@ -7,7 +7,7 @@ def main():
     pipeline = SpeakerDiarization()
 
     # Setup the WebSocket Audio Source
-    source = WebSocketAudioSource(pipeline.config.sample_rate, "localhost", 7007)
+    source = WebSocketAudioSource(pipeline.config.sample_rate, "0.0.0.0", 7007)
 
     # Create the Streaming Inference instance
     inference = StreamingInference(pipeline, source)
