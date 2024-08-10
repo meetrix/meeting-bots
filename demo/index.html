@@ -20,40 +20,25 @@
             }
         }
 
-        function sendAudioToWebSocket(ws, stream) {
+        async function sendAudioToWebSocket(ws, stream) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-            const sampleRate = audioContext.sampleRate;
-            const bufferSize = 4096; // Smaller buffer size, to be aggregated
-            const targetDuration = 0.5; // 0.5 seconds
-            const targetBufferLength = sampleRate * targetDuration;
-            let accumulatedBuffer = new Float32Array(0);
 
-            const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+            // Load the audio worklet processor
+            await audioContext.audioWorklet.addModule('pcm-processor.js');
 
-            scriptProcessor.onaudioprocess = function(audioProcessingEvent) {
-                const inputBuffer = audioProcessingEvent.inputBuffer;
-                const inputData = inputBuffer.getChannelData(0); // get audio data as Float32Array
+            // Create an instance of AudioWorkletNode
+            const pcmNode = new AudioWorkletNode(audioContext, 'pcm-processor');
 
-                // Accumulate buffers
-                let newBuffer = new Float32Array(accumulatedBuffer.length + inputData.length);
-                newBuffer.set(accumulatedBuffer, 0);
-                newBuffer.set(inputData, accumulatedBuffer.length);
-                accumulatedBuffer = newBuffer;
-
-                // If the accumulated buffer is at least 0.5 seconds, send it
-                if (accumulatedBuffer.length >= targetBufferLength) {
-                    const dataToSend = accumulatedBuffer.subarray(0, targetBufferLength);
-                    const encodedData = encodeAudio(dataToSend);
-                    ws.send(encodedData); // send encoded data via WebSocket
-
-                    // Remove the sent data from the accumulated buffer
-                    accumulatedBuffer = accumulatedBuffer.subarray(targetBufferLength);
-                }
+            // Handle messages received from the worklet processor
+            pcmNode.port.onmessage = (event) => {
+                const rawPCMData = event.data;
+                const encodedData = encodeAudio(rawPCMData);
+                ws.send(encodedData); // Send encoded data via WebSocket
             };
 
-            mediaStreamSource.connect(scriptProcessor);
-            scriptProcessor.connect(audioContext.destination);
+            const mediaStreamSource = audioContext.createMediaStreamSource(stream);
+            mediaStreamSource.connect(pcmNode);
+            pcmNode.connect(audioContext.destination);
         }
 
         function encodeAudio(buffer) {
