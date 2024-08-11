@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
+import torchaudio
+import numpy as np
 from diart import SpeakerDiarization
-from diart.sources import FileAudioSource
 from diart.inference import StreamingInference
+from .in_memory_audio_source import InMemoryAudioSource
 
 def process_audio_file(file_path, sample_rate=16000):
     """
@@ -22,8 +24,22 @@ def process_audio_file(file_path, sample_rate=16000):
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        # Initialize the FileAudioSource with the file path
-        source = FileAudioSource(file=file_path, sample_rate=sample_rate)
+        # Load the audio file into memory using torchaudio
+        waveform, original_sample_rate = torchaudio.load(file_path)
+
+        # Resample if necessary
+        if original_sample_rate != sample_rate:
+            resampler = torchaudio.transforms.Resample(orig_freq=original_sample_rate, new_freq=sample_rate)
+            waveform = resampler(waveform)
+
+        # Convert the waveform to PCM data (int16) and then to bytes
+        pcm_data = waveform.numpy().astype(np.float32).tobytes()
+
+        # Initialize the InMemoryAudioSource with the sample rate
+        source = InMemoryAudioSource(sample_rate=sample_rate)
+
+        # Feed the PCM data into the InMemoryAudioSource
+        source.feed_data(pcm_data)
 
         # Initialize the Speaker Diarization pipeline
         pipeline = SpeakerDiarization()

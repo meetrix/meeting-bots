@@ -4,54 +4,73 @@ import numpy as np
 
 class InMemoryAudioSource(AudioSource):
     """
-    Represents an in-memory source of audio data that can be fed programmatically.
-
-    Parameters
-    ----------
-    sample_rate: int
-        Sample rate of the chunks emitted.
+    Represents an in-memory audio source that chunks audio data into blocks of consistent size.
     """
 
-    def __init__(self, sample_rate: int):
-        super().__init__(uri="in_memory_audio", sample_rate=sample_rate)
-        self.is_closed = False
+    def __init__(self, sample_rate: int, block_duration: float = 0.5, padding: tuple = (0, 0)):
+        super().__init__(uri="in_memory", sample_rate=sample_rate)
+        self.block_size = int(np.rint(block_duration * sample_rate))
+        self.padding_start, self.padding_end = padding
+        self.stream = Subject()
+        self.buffer = []
 
     def feed_data(self, pcm_data: bytes):
         """
-        Feed raw PCM data into the audio stream.
+        Feed PCM data into the audio source.
 
-        Parameters
-        ----------
-        pcm_data: bytes
-            The raw PCM audio data to be fed into the stream.
+        Parameters:
+        - pcm_data (bytes): The raw PCM audio data.
         """
-        if self.is_closed:
-            raise RuntimeError("Audio source is closed. No more data can be fed.")
-
         try:
-            # Convert PCM bytes to numpy array
+            # Convert PCM bytes to numpy array using float32 (since it's coming from waveform)
             audio_array = np.frombuffer(pcm_data, dtype=np.float32)
 
-            # Reshape the audio array to match the expected format (1, num_samples)
-            audio_array = audio_array.reshape(1, -1)
+            # Add zero padding at the beginning if required
+            if self.padding_start > 0:
+                num_pad_samples = int(np.rint(self.padding_start * self.sample_rate))
+                zero_padding = np.zeros(num_pad_samples, dtype=np.float32)
+                audio_array = np.concatenate([zero_padding, audio_array])
 
-            print(f"Received audio data: {audio_array.shape}")
+            # Buffer the audio data
+            self.buffer.extend(audio_array)
 
-            # Emit the audio data through the stream
-            self.stream.on_next(audio_array)
+            # Process the buffered data in chunks
+            while len(self.buffer) >= self.block_size:
+                chunk = self.buffer[:self.block_size]
+                self.buffer = self.buffer[self.block_size:]
+                self.stream.on_next(np.array(chunk).reshape(1, -1))
 
         except Exception as e:
-            self.stream.on_error(e)
+            print(f"Error processing PCM data: {e}")
             raise
 
+    def finalize(self):
+        """
+        Finalize the streaming by adding padding at the end and sending any remaining data.
+        """
+        # Add zero padding at the end if required
+        if self.padding_end > 0:
+            num_pad_samples = int(np.rint(self.padding_end * self.sample_rate))
+            zero_padding = np.zeros(num_pad_samples, dtype=np.float32)
+            self.buffer.extend(zero_padding)
+
+        # Send the remaining data if any
+        if len(self.buffer) > 0:
+            last_chunk = np.array(self.buffer).reshape(1, -1)
+            self.stream.on_next(last_chunk)
+            self.buffer = []
+
+        # Complete the stream
+        self.stream.on_completed()
+
     def read(self):
-        """Start reading the source and yielding samples through the stream."""
-        # In this case, the stream is controlled externally via `feed_data()`,
-        # so we don't need to do anything here.
+        """
+        Required by the AudioSource interface, but not used in this implementation.
+        """
         pass
 
     def close(self):
-        """Close the in-memory audio source."""
-        if not self.is_closed:
-            self.is_closed = True
-            self.stream.on_completed()
+        """
+        Closes the audio stream.
+        """
+        self.stream.on_completed()
