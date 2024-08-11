@@ -14,7 +14,6 @@ class InMemoryAudioSource(AudioSource):
 
     def __init__(self, sample_rate: int):
         super().__init__(uri="in_memory_audio", sample_rate=sample_rate)
-        self.stream = Subject()  # This will be used to feed data into the pipeline
         self.is_closed = False
 
     def feed_data(self, pcm_data: bytes):
@@ -35,6 +34,8 @@ class InMemoryAudioSource(AudioSource):
 
             # Reshape the audio array to match the expected format (1, num_samples)
             audio_array = audio_array.reshape(1, -1)
+
+            print(f"Received audio data: {audio_array.shape}")
 
             # Emit the audio data through the stream
             self.stream.on_next(audio_array)
