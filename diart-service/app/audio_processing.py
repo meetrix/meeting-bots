@@ -39,7 +39,7 @@ def process_pcm_data(pcm_data, sample_rate=48000):
         streamer = torchaudio.io.StreamReader(wav_io, format='wav')
 
         # Initialize the TorchStreamAudioSource with the StreamReader
-        source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
+        source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer, stream_index=0)
 
         # Initialize the Speaker Diarization pipeline
         pipeline = SpeakerDiarization()
@@ -49,6 +49,9 @@ def process_pcm_data(pcm_data, sample_rate=48000):
 
         # Run the prediction
         prediction = inference()
+
+        print("Speaker Diarization prediction:")
+        print(prediction)
 
         # Return the prediction as a string
         return str(prediction)
