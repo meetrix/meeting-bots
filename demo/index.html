@@ -24,6 +24,8 @@
                 document.getElementById("status").innerText = "Status: Connected";
 
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const sampleRate = audioContext.sampleRate;
+                console.log('Sample Rate:', sampleRate);
                 await audioContext.audioWorklet.addModule('pcm-processor.js');
                 audioWorkletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
 

@@ -2,12 +2,13 @@
 
 import numpy as np
 import torchaudio
+import torch
 from io import BytesIO
 from diart.sources import TorchStreamAudioSource
 from diart import SpeakerDiarization
 from diart.inference import StreamingInference
 
-def process_pcm_data(pcm_data, sample_rate=16000):
+def process_pcm_data(pcm_data, sample_rate=48000):
     """
     Process raw PCM data and run speaker diarization.
 
@@ -19,13 +20,20 @@ def process_pcm_data(pcm_data, sample_rate=16000):
     - str: A string representation of the diarization result.
     """
     try:
+        # Log data type and shape
+        print("Received PCM data type:", type(pcm_data))
+        print("PCM data length:", len(pcm_data))
+
+        # Convert PCM bytes to numpy array
+        audio_array = np.frombuffer(pcm_data, dtype=np.float32)
+        print("Converted audio array shape:", audio_array.shape)
         # Convert PCM bytes to numpy array
         audio_array = np.frombuffer(pcm_data, dtype=np.float32)
 
         # Use BytesIO to simulate a file in memory
         wav_io = BytesIO()
-        # torchaudio.save(wav_io, torch.tensor(audio_array).unsqueeze(0), sample_rate, format='wav')
-        # wav_io.seek(0)
+        torchaudio.save(wav_io, torch.tensor(audio_array).unsqueeze(0), sample_rate, format='wav')
+        wav_io.seek(0)
 
         # Initialize the StreamReader from torchaudio
         # streamer = torchaudio.io.StreamReader(wav_io, format='wav')

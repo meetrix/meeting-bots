@@ -12,6 +12,7 @@ diart = "^0.9.1"  # Replace with the correct version if known
 websockets = "^11.0"
 asyncio = { version = "^3.4.3", markers = "python_version < '3.10'" }  # asyncio is built-in from Python 3.10+
 ffmpeg-python = "^0.2.0"
+torch = "^2.4.0"
 torchaudio = "^2.4.0"
 fastapi = "^0.112.0"
 uvicorn = "^0.30.5"
