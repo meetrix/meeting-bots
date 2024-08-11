@@ -17,4 +17,4 @@ SHELL ["conda", "run", "-n", "diart", "/bin/bash", "-c"]
 RUN echo "conda activate diart" >> ~/.bashrc
 
 # Set the default command to execute the script when the container starts
-CMD ["conda", "run", "--no-capture-output", "-n", "diart", "python", "app/app.py"]
+CMD ["conda", "run", "--no-capture-output", "-n", "diart", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "7007", "--reload"]

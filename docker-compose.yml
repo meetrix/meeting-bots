@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   google-meet-bot:
     build: .
@@ -27,6 +25,7 @@ services:
     volumes:
       - ./diart-service:/usr/src/app
       - cache:/root/.cache
+    command: ["conda", "run", "--no-capture-output", "-n", "diart", "uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "7007", "--reload"]
 
 volumes:
   cache:
