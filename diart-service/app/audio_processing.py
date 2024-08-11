@@ -1,61 +1,87 @@
 import numpy as np
-import torchaudio
-import torch
-from io import BytesIO
-from diart.sources import TorchStreamAudioSource
+from fastapi import WebSocket, WebSocketDisconnect
 from diart import SpeakerDiarization
 from diart.inference import StreamingInference
+from .in_memory_audio_source import InMemoryAudioSource
 
-def process_pcm_data(pcm_data, sample_rate=48000):
-    """
-    Process raw PCM data and run speaker diarization.
+class WebSocketAudioProcessor:
+    def __init__(self, sample_rate=48000):
+        self.sample_rate = sample_rate
+        self.pipeline = None
+        self.source = None
+        self.inference = None
 
-    Parameters:
-    - pcm_data (bytes): The raw PCM audio data.
-    - sample_rate (int): The sample rate of the audio data.
-
-    Returns:
-    - str: A string representation of the diarization result.
-    """
-    try:
-        # Log data type and shape
-        print("Received PCM data type:", type(pcm_data))
-        print("PCM data length:", len(pcm_data))
-
-        # Convert PCM bytes to numpy array
-        audio_array = np.frombuffer(pcm_data, dtype=np.float32)
-        print("Converted audio array shape:", audio_array.shape)
-
-        # Reshape the audio array to match the expected format (1, num_samples)
-        audio_array = audio_array.reshape(1, -1)
-
-        # Use BytesIO to simulate a file in memory
-        wav_io = BytesIO()
-        # Save the NumPy array as a WAV file using torchaudio's save function
-        torchaudio.save(wav_io, torch.from_numpy(audio_array), sample_rate, format='wav')
-        wav_io.seek(0)
-
-        # Initialize the StreamReader from torchaudio
-        streamer = torchaudio.io.StreamReader(wav_io, format='wav')
-
-        # Initialize the TorchStreamAudioSource with the StreamReader
-        source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer, stream_index=0)
+    def setup_pipeline(self):
+        """
+        Set up the Speaker Diarization pipeline and InMemoryAudioSource.
+        This should be called once when the WebSocket connection is established.
+        """
+        # Initialize the InMemoryAudioSource
+        self.source = InMemoryAudioSource(sample_rate=self.sample_rate)
 
         # Initialize the Speaker Diarization pipeline
-        pipeline = SpeakerDiarization()
+        self.pipeline = SpeakerDiarization()
 
         # Create the Streaming Inference instance
-        inference = StreamingInference(pipeline, source)
+        self.inference = StreamingInference(self.pipeline, self.source)
 
-        # Run the prediction
-        prediction = inference()
+    def process_pcm_data(self, pcm_data):
+        """
+        Process raw PCM data through the previously set up pipeline.
 
-        print("Speaker Diarization prediction:")
-        print(prediction)
+        Parameters:
+        - pcm_data (bytes): The raw PCM audio data.
 
-        # Return the prediction as a string
-        return str(prediction)
+        Returns:
+        - str: A string representation of the diarization result.
+        """
+        try:
+            # Feed the data into the InMemoryAudioSource
+            self.source.feed_data(pcm_data)
+
+            # Run the prediction
+            prediction = self.inference()
+
+            print("Speaker Diarization prediction:")
+            print(prediction)
+
+            # Return the prediction as a string
+            return str(prediction)
+        
+        except Exception as e:
+            print(f"Error processing PCM data: {e}")
+            raise
+
+async def handle_websocket(websocket: WebSocket):
+    """
+    Handle the WebSocket connection for processing PCM data.
+    
+    Parameters:
+    - websocket: The WebSocket connection to handle.
+    """
+    processor = WebSocketAudioProcessor()
+    processor.setup_pipeline()  # Set up the diarization pipeline and audio source
+    
+    await websocket.accept()
+    print(f"Connection established with {websocket.client.host}:{websocket.client.port}")
+
+    try:
+        while True:
+            # Receive PCM data as bytes
+            message = await websocket.receive_bytes()
+            print(f"Received a message of size {len(message)} bytes from {websocket.client.host}:{websocket.client.port}")
+
+            # Process the received PCM data
+            result = processor.process_pcm_data(message)
+
+            # Send the diarization result back to the client
+            await websocket.send_text(result)
+    
+    except WebSocketDisconnect:
+        print(f"Connection with {websocket.client.host}:{websocket.client.port} closed.")
+        processor.source.close()  # Ensure the audio source is closed properly
     
     except Exception as e:
-        print(f"Error processing PCM data: {e}")
-        raise
+        print(f"Error: {e}")
+        await websocket.close()
+        processor.source.close()  # Ensure the audio source is closed in case of error
