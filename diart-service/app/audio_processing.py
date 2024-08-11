@@ -1,5 +1,3 @@
-# audio_processing.py
-
 import numpy as np
 import torchaudio
 import torch
@@ -27,32 +25,33 @@ def process_pcm_data(pcm_data, sample_rate=48000):
         # Convert PCM bytes to numpy array
         audio_array = np.frombuffer(pcm_data, dtype=np.float32)
         print("Converted audio array shape:", audio_array.shape)
-        # Convert PCM bytes to numpy array
-        audio_array = np.frombuffer(pcm_data, dtype=np.float32)
+
+        # Convert to a regular PyTorch tensor
+        audio_tensor = torch.tensor(audio_array).unsqueeze(0)
+        audio_tensor = audio_tensor.clone().detach()  # Ensure it's a regular tensor
 
         # Use BytesIO to simulate a file in memory
         wav_io = BytesIO()
-        torchaudio.save(wav_io, torch.tensor(audio_array).unsqueeze(0), sample_rate, format='wav')
+        torchaudio.save(wav_io, audio_tensor, sample_rate, format='wav')
         wav_io.seek(0)
 
         # Initialize the StreamReader from torchaudio
-        # streamer = torchaudio.io.StreamReader(wav_io, format='wav')
+        streamer = torchaudio.io.StreamReader(wav_io, format='wav')
 
         # Initialize the TorchStreamAudioSource with the StreamReader
-        # source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
+        source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
 
         # Initialize the Speaker Diarization pipeline
-        # pipeline = SpeakerDiarization()
+        pipeline = SpeakerDiarization()
 
         # Create the Streaming Inference instance
-        # inference = StreamingInference(pipeline, source)
+        inference = StreamingInference(pipeline, source)
 
         # Run the prediction
-        # prediction = inference()
+        prediction = inference()
 
         # Return the prediction as a string
-        # return str(prediction)
-        return "This is a placeholder for the diarization result."
+        return str(prediction)
     
     except Exception as e:
         print(f"Error processing PCM data: {e}")
