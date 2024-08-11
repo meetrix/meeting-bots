@@ -1,8 +1,8 @@
 # server.py
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from app.audio_processing import handle_websocket
-from app.file_processor import process_audio_file
+from app.processors.websocket_processor import handle_websocket
+from app.processors.file_processor import process_audio_file
 from pathlib import Path
 
 # script_dir = Path(__file__).resolve().parent

@@ -2,7 +2,7 @@ import numpy as np
 from fastapi import WebSocket, WebSocketDisconnect
 from diart import SpeakerDiarization
 from diart.inference import StreamingInference
-from .in_memory_audio_source import InMemoryAudioSource
+from app.sources.in_memory_audio_source import InMemoryAudioSource
 
 class WebSocketAudioProcessor:
     def __init__(self, sample_rate=48000):
