@@ -6,3 +6,4 @@ node_modules/
 dist/
 assets/videos
 *.y4m
+__pycache__/

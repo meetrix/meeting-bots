@@ -17,37 +17,49 @@ def process_webm_data(webm_data):
     Returns:
     - str: A string representation of the diarization result.
     """
-    # Convert WebM to WAV in memory
-    wav_data, _ = (
-        ffmpeg
-        .input('pipe:0', format='webm')
-        .output('pipe:1', format='wav')
-        .run(input=webm_data, capture_stdout=True, capture_stderr=True)
-    )
+    try:
+        # Convert WebM to WAV in memory
+        wav_data, err = (
+            ffmpeg
+            .input('pipe:0', format='webm')
+            .output('pipe:1', format='wav')
+            .run(input=webm_data, capture_stdout=True, capture_stderr=True)
+        )
 
-    # Use BytesIO to simulate a file in memory
-    wav_io = BytesIO(wav_data)
+        # Print ffmpeg stderr output if any
+        if err:
+            print("ffmpeg stderr:", err.decode('utf8'))
 
-    # Initialize the StreamReader from torchaudio
-    streamer = torchaudio.io.StreamReader(wav_io, format='wav')
+        # Use BytesIO to simulate a file in memory
+        wav_io = BytesIO(wav_data)
 
-    # Extract sample rate from the WAV data
-    sample_rate = streamer.get_src_stream_info(0).sample_rate
+        # Initialize the StreamReader from torchaudio
+        streamer = torchaudio.io.StreamReader(wav_io, format='wav')
 
-    # Initialize the TorchStreamAudioSource with the StreamReader
-    source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
+        # Extract sample rate from the WAV data
+        sample_rate = streamer.get_src_stream_info(0).sample_rate
 
-    # Initialize the Speaker Diarization pipeline
-    pipeline = SpeakerDiarization()
+        # Initialize the TorchStreamAudioSource with the StreamReader
+        # source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
 
-    # Create the Streaming Inference instance
-    inference = StreamingInference(pipeline, source)
+        # Initialize the Speaker Diarization pipeline
+        # pipeline = SpeakerDiarization()
 
-    # Run the prediction
-    prediction = inference()
+        # Create the Streaming Inference instance
+        # inference = StreamingInference(pipeline, source)
 
-    # For demonstration, print the prediction (if any)
-    print(prediction)
+        # Run the prediction
+        # prediction = inference()
 
-    # Returning the prediction as a string (you may want to format this differently)
-    return str(prediction)
+        # For demonstration, print the prediction (if any)
+        # print(prediction)
+
+        # Returning the prediction as a string (you may want to format this differently)
+        # return str(prediction)
+        return 'This is a placeholder for the diarization result.'
+    
+    except ffmpeg.Error as e:
+        # Print the full stderr output from ffmpeg in case of error
+        print("ffmpeg error:", e.stderr.decode('utf8'))
+        raise
+
