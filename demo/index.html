@@ -16,7 +16,7 @@
         let ws;
 
         document.getElementById("startButton").onclick = async function() {
-            ws = new WebSocket('ws://localhost:7007'); // Adjust the WebSocket URL as needed
+            ws = new WebSocket('ws://localhost:7007/ws'); // Adjust the WebSocket URL as needed
 
             ws.onopen = async function() {
                 console.log('WebSocket connection established');

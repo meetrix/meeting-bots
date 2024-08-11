@@ -1,7 +1,7 @@
 # server.py
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-# from audio_processing import process_webm_data
+from app.audio_processing import process_webm_data
 
 app = FastAPI()
 
