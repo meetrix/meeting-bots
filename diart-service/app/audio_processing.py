@@ -26,13 +26,13 @@ def process_pcm_data(pcm_data, sample_rate=48000):
         audio_array = np.frombuffer(pcm_data, dtype=np.float32)
         print("Converted audio array shape:", audio_array.shape)
 
-        # Convert to a regular PyTorch tensor
-        audio_tensor = torch.tensor(audio_array).unsqueeze(0)
-        audio_tensor = audio_tensor.clone().detach()  # Ensure it's a regular tensor
+        # Reshape the audio array to match the expected format (1, num_samples)
+        audio_array = audio_array.reshape(1, -1)
 
         # Use BytesIO to simulate a file in memory
         wav_io = BytesIO()
-        torchaudio.save(wav_io, audio_tensor, sample_rate, format='wav')
+        # Save the NumPy array as a WAV file using torchaudio's save function
+        torchaudio.save(wav_io, torch.from_numpy(audio_array), sample_rate, format='wav')
         wav_io.seek(0)
 
         # Initialize the StreamReader from torchaudio

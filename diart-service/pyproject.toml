@@ -16,6 +16,7 @@ torch = "^2.4.0"
 torchaudio = "^2.4.0"
 fastapi = "^0.112.0"
 uvicorn = "^0.30.5"
+numpy = "^1.21.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
