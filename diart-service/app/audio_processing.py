@@ -1,43 +1,34 @@
 # audio_processing.py
 
-from io import BytesIO
-import ffmpeg
+import numpy as np
 import torchaudio
+from io import BytesIO
 from diart.sources import TorchStreamAudioSource
 from diart import SpeakerDiarization
 from diart.inference import StreamingInference
 
-def process_webm_data(webm_data):
+def process_pcm_data(pcm_data, sample_rate=16000):
     """
-    Process the WebM data by converting it to WAV in memory and running speaker diarization.
+    Process raw PCM data and run speaker diarization.
 
     Parameters:
-    - webm_data (bytes): The WebM audio data.
+    - pcm_data (bytes): The raw PCM audio data.
+    - sample_rate (int): The sample rate of the audio data.
 
     Returns:
     - str: A string representation of the diarization result.
     """
     try:
-        # Convert WebM to WAV in memory
-        wav_data, err = (
-            ffmpeg
-            .input('pipe:0', format='webm')
-            .output('pipe:1', format='wav')
-            .run(input=webm_data, capture_stdout=True, capture_stderr=True)
-        )
-
-        # Print ffmpeg stderr output if any
-        if err:
-            print("ffmpeg stderr:", err.decode('utf8'))
+        # Convert PCM bytes to numpy array
+        audio_array = np.frombuffer(pcm_data, dtype=np.float32)
 
         # Use BytesIO to simulate a file in memory
-        wav_io = BytesIO(wav_data)
+        wav_io = BytesIO()
+        # torchaudio.save(wav_io, torch.tensor(audio_array).unsqueeze(0), sample_rate, format='wav')
+        # wav_io.seek(0)
 
         # Initialize the StreamReader from torchaudio
-        streamer = torchaudio.io.StreamReader(wav_io, format='wav')
-
-        # Extract sample rate from the WAV data
-        sample_rate = streamer.get_src_stream_info(0).sample_rate
+        # streamer = torchaudio.io.StreamReader(wav_io, format='wav')
 
         # Initialize the TorchStreamAudioSource with the StreamReader
         # source = TorchStreamAudioSource(uri="in_memory_wav", sample_rate=sample_rate, streamer=streamer)
@@ -51,15 +42,10 @@ def process_webm_data(webm_data):
         # Run the prediction
         # prediction = inference()
 
-        # For demonstration, print the prediction (if any)
-        # print(prediction)
-
-        # Returning the prediction as a string (you may want to format this differently)
+        # Return the prediction as a string
         # return str(prediction)
-        return 'This is a placeholder for the diarization result.'
+        return "This is a placeholder for the diarization result."
     
-    except ffmpeg.Error as e:
-        # Print the full stderr output from ffmpeg in case of error
-        print("ffmpeg error:", e.stderr.decode('utf8'))
+    except Exception as e:
+        print(f"Error processing PCM data: {e}")
         raise
-

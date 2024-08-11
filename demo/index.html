@@ -12,26 +12,30 @@
     <p id="status">Status: Not Connected</p>
 
     <script>
-        let mediaRecorder;
         let ws;
+        let audioContext;
+        let audioWorkletNode;
 
-        document.getElementById("startButton").onclick = async function() {
-            ws = new WebSocket('ws://localhost:7007/ws'); // Adjust the WebSocket URL as needed
+        async function startStreaming() {
+            ws = new WebSocket('ws://localhost:7007/ws');
 
             ws.onopen = async function() {
                 console.log('WebSocket connection established');
                 document.getElementById("status").innerText = "Status: Connected";
 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.audioWorklet.addModule('pcm-processor.js');
+                audioWorkletNode = new AudioWorkletNode(audioContext, 'pcm-processor');
 
-                mediaRecorder.ondataavailable = function(event) {
-                    if (event.data.size > 0) {
-                        ws.send(event.data); // Send audio data as a Blob
-                    }
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(audioWorkletNode);
+
+                audioWorkletNode.port.onmessage = (event) => {
+                    const { buffer } = event.data;
+                    ws.send(buffer); // Send raw PCM data
                 };
 
-                mediaRecorder.start(1000); // Collect 1-second chunks
                 document.getElementById("startButton").disabled = true;
                 document.getElementById("stopButton").disabled = false;
             };
@@ -46,11 +50,16 @@
                 document.getElementById("startButton").disabled = false;
                 document.getElementById("stopButton").disabled = true;
             };
-        };
+        }
+
+        document.getElementById("startButton").onclick = startStreaming;
 
         document.getElementById("stopButton").onclick = function() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
+            if (audioWorkletNode) {
+                audioWorkletNode.disconnect();
+            }
+            if (audioContext) {
+                audioContext.close();
             }
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close();

@@ -1,7 +1,7 @@
 # server.py
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from app.audio_processing import process_webm_data
+from app.audio_processing import process_pcm_data
 
 app = FastAPI()
 
@@ -14,7 +14,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             message = await websocket.receive_bytes()
             print(f"Received a message of size {len(message)} bytes from {websocket.client.host}:{websocket.client.port}")
-            result = process_webm_data(message)
+            result = process_pcm_data(message)
             await websocket.send_text(result)
     
     except WebSocketDisconnect:
