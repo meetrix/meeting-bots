@@ -7,15 +7,7 @@ from .in_memory_audio_source import InMemoryAudioSource
 class WebSocketAudioProcessor:
     def __init__(self, sample_rate=48000):
         self.sample_rate = sample_rate
-        self.pipeline = None
-        self.source = None
-        self.inference = None
 
-    def setup_pipeline(self):
-        """
-        Set up the Speaker Diarization pipeline and InMemoryAudioSource.
-        This should be called once when the WebSocket connection is established.
-        """
         # Initialize the InMemoryAudioSource
         self.source = InMemoryAudioSource(sample_rate=self.sample_rate)
 
@@ -59,8 +51,7 @@ async def handle_websocket(websocket: WebSocket):
     Parameters:
     - websocket: The WebSocket connection to handle.
     """
-    processor = WebSocketAudioProcessor()
-    processor.setup_pipeline()  # Set up the diarization pipeline and audio source
+    processor = WebSocketAudioProcessor()  # Set up the diarization pipeline and audio source in __init__
     
     await websocket.accept()
     print(f"Connection established with {websocket.client.host}:{websocket.client.port}")
