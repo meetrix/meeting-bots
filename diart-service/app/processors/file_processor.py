@@ -4,7 +4,7 @@ import torchaudio
 import numpy as np
 from diart import SpeakerDiarization
 from diart.inference import StreamingInference
-from .in_memory_audio_source import InMemoryAudioSource
+from app.sources.in_memory_audio_source import InMemoryAudioSource
 
 def process_audio_file(file_path, sample_rate=16000):
     """
